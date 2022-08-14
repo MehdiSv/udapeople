@@ -76,7 +76,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo -i root
+            sudo -i
             sudo apt clean
             sudo apt autoclean
             sudo apt install -f
