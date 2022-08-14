@@ -109,6 +109,9 @@ jobs:
           command: |
             cd frontend
             npm install
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
+            npm audit --audit-level=critical
 
   scan-backend:
     docker:
@@ -122,6 +125,9 @@ jobs:
           command: |
             cd backend
             npm install
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
+            npm audit --audit-level=critical
 
   deploy-infrastructure:
     docker:
@@ -231,13 +237,14 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: amazon/aws-cli
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            yum -y install tar gzip
+            sudo apt update
+            sudo apt install awscli -y
       - attach_workspace:
           at: ~/
       - run:
@@ -263,28 +270,29 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: nikolaik/python-nodejs:latest
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            apt clean
-            apt autoclean
-            apt install -f
-            apt autoremove
-            apt install curl
+            sudo apt clean
+            sudo apt autoclean
+            sudo apt install -f
+            sudo apt autoremove
+            sudo apt install curl
+            sudo apt install awscli -y
             cd ~
-            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-            apt-get install -y nodejs
+            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+            sudo apt-get install -y nodejs
             curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
             echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-            apt update
-            apt install yarn
+            sudo apt update
+            sudo apt install yarn
             node -v && npm -v    
-            apt-get install python3 python3-pip -y
-            pip3 install ansible
-            apt update && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | bash -
+            sudo apt-get install python3 python3-pip -y
+            sudo pip3 install ansible
+            sudo apt update && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | sudo -E bash -
       - add_ssh_keys:
           fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
       - attach_workspace:
