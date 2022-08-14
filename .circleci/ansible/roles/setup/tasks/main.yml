@@ -9,20 +9,8 @@
   apt:
     upgrade: yes
 
-- name: remove dependencies that are no longer required
-  become: yes
-  apt:
-    autoremove: yes
-
 - name: Install dependencies.
   shell: |
-    curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+    curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
     sudo apt-get install -y nodejs
-
-- name: "install pm2"
-  become: yes
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
+    sudo npm install pm2 -g
