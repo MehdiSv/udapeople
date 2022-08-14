@@ -27,7 +27,7 @@ commands:
           when: on_fail
           command: |
             SUCCESS=$(curl --insecure  https://kvdb.io/9wfrkd4RKmdiHao1Hevdnu/migration_<< parameters.workflow_id >>)
-            if(( $SUCCESS==1 )); 
+            if(( $SUCCESS==1 ))
             then
               cd ~/project/backend
               npm install
@@ -76,6 +76,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            sudo -i root
             sudo apt clean
             sudo apt autoclean
             sudo apt install -f
