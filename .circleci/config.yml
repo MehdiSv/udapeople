@@ -164,17 +164,11 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: amazon/aws-cli
+      - image: onesysadmin/ansible
     steps:
       - checkout
       - add_ssh_keys:
           fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
-      - run:
-          name: Install dependencies
-          command: |
-            yum install epel-release
-            yum repolist
-            yum install -y ansible
       - attach_workspace:
           at: ~/
       - run:
@@ -242,17 +236,11 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: amazon/aws-cli
+      - image: onesysadmin/ansible
     steps:
       - checkout
       - add_ssh_keys:
           fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
-      - run:
-          name: Install dependencies
-          command: |
-            yum install epel-release
-            yum repolist          
-            yum install -y ansible
       - attach_workspace:
           at: ~/
       - run:
@@ -279,21 +267,50 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install dependencies
-          command: |
-            # your code here
-      - run:
           name: Get backend url
           command: |
-            # your code here
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
       - run:
           name: Backend smoke test.
           command: |
-            # your code here
+            if curl "${API_URL}/api/status" | grep "ok"
+            then
+                return 0
+            else
+                return 1
+            fi
       - run:
           name: Frontend smoke test.
           command: |
-            # your code here
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com/#/employees"            
+            echo ${URL} 
+            if curl -s ${URL} | grep "Welcome"
+            then
+                # Change this to 0 after the job fails
+              return 1
+            else
+              return 1
+            fi
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+                    --template-file .circleci/files/cloudfront.yml \
+                    --stack-name InitialStack \
+                    --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+                    --tags project=udapeople
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
