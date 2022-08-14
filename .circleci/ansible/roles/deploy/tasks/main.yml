@@ -1,16 +1,13 @@
 - name: Creates App directory
-  file:
-    path: ~/app
-    state: directory
+  shell: |
+    mkdir -p ~/app
 
 - name: copying file with playbook
-  become: true
   copy:
     src: ../../artifact.tar.gz
     dest: ~/app
 
 - name: Install dependencies
-  become: true
   shell: |
     cd /home/ubuntu/app
     tar xf /home/ubuntu/app/artifact.tar.gz
