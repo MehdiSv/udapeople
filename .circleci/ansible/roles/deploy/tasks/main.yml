@@ -1,13 +1,28 @@
+- name: Creates App directory
+  file:
+    path: ~/app
+    state: directory
+
 - name: copying file with playbook
   become: true
   copy:
     src: ../../artifact.tar.gz
-    dest: ~/
+    dest: ~/app
 
-- name: Executing node
+- name: Install dependencies
+  become: true
   shell: |
-    cd ../../
-    tar -zxvf artifact.tar.gz    
-    npm install
-    pm2 stop default
-    pm2 start npm -- start
+    curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+    apt-get install -y nodejs
+    apt-get install gcc g++ make -y
+    npm install -g npm
+    npm install -g pm2
+    cd /home/ubuntu/app
+    tar xf /home/ubuntu/app/artifact.tar.gz
+
+- name: Start backend
+  shell: |
+    /usr/bin/pm2 start /home/ubuntu/app/dist/main.js --name backend -f
+  environment:
+    ENVIRONMENT: production
+    NODE_ENV: production
