@@ -46,6 +46,9 @@ jobs:
             apt update
             apt-get install python3 python3-pip -y
             pip3 install ansible
+            apt install npm -y
+            apt update && apt install curl && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | -E bash -
+
       - add_ssh_keys:
           fingerprints:
             - "cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"
@@ -123,7 +126,11 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apt install ansible
+            apt update
+            apt-get install python3 python3-pip -y
+            pip3 install ansible
+            apt install npm -y
+            apt update && apt install curl && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | -E bash -
       - add_ssh_keys:
           fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
       - attach_workspace:
