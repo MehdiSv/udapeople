@@ -43,9 +43,9 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apt remove --purge nodejs npm
-            apt clean
-            apt autoclean
+            yes | apt remove --purge nodejs npm
+            yes | apt clean
+            yes | apt autoclean
             apt install -f
             apt autoremove
             apt install curl
