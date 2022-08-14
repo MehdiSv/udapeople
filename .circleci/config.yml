@@ -172,32 +172,16 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: nikolaik/python-nodejs:latest
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            apt clean
-            apt autoclean
-            apt install -f
-            apt autoremove
-            apt install curl
-            cd ~
-            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-            apt-get install -y nodejs
-            curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-            echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-            apt update
-            apt install awscli -y
-            apt install yarn
-            node -v && npm -v    
-            apt-get install python3 python3-pip -y
-            pip3 install ansible
-            apt update && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | bash -
       - add_ssh_keys:
           fingerprints:
             - "cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
       - attach_workspace:
           at: ~/
       - run:
@@ -206,8 +190,6 @@ jobs:
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   run-migrations:
     docker:
@@ -298,6 +280,8 @@ jobs:
             sudo pip3 install ansible
             sudo apt update && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | sudo -E bash -
             sudo npm install pm2 -g && pm2 update
+            pm2 stop default
+            pm2 start npm -- start
       - add_ssh_keys:
           fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
       - attach_workspace:
