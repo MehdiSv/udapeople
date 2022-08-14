@@ -35,6 +35,134 @@ commands:
             fi
 
 jobs:
+  build-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Build front-end
+          command: |
+            cd frontend
+            npm install
+            npm run build
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build
+
+  build-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Back-end build
+          command: |
+            cd backend
+            npm install
+            npm run build
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build
+
+  test-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Front-end test
+          command: |
+            cd frontend
+            npm install
+            npm run test
+
+  test-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Back-end test
+          command: |
+            cd backend
+            npm install
+            npm run test
+
+  scan-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Front-end scan
+          command: |
+            cd frontend
+            npm install
+
+  scan-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Back-end scan
+          command: |
+            cd backend
+            npm install
+
+  deploy-infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install tar and gzip
+          command: |
+            yum -y install tar gzip
+      - run:
+          name: Ensure back-end infrastructure exists
+          command: |
+            aws cloudformation deploy \
+                --template-file .circleci/files/backend.yml \
+                --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
+                --tags project=udapeople
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=udapeople \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            cd .circleci
+            echo "[web]" > ansible/inventory.txt
+            aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text >> ansible/inventory.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+
   configure-infrastructure:
     docker:
       - image: nikolaik/python-nodejs:latest
@@ -49,7 +177,7 @@ jobs:
             apt autoremove
             apt install curl
             cd ~
-            curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
+            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
             apt-get install -y nodejs
             curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
             echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
@@ -59,7 +187,6 @@ jobs:
             apt-get install python3 python3-pip -y
             pip3 install ansible
             apt update && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | bash -
-
       - add_ssh_keys:
           fingerprints:
             - "cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"
@@ -137,11 +264,22 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            apt clean
+            apt autoclean
+            apt install -f
+            apt autoremove
+            apt install curl
+            cd ~
+            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+            apt-get install -y nodejs
+            curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+            echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
             apt update
+            apt install yarn
+            node -v && npm -v    
             apt-get install python3 python3-pip -y
             pip3 install ansible
-            apt install nodejs npm -y
-            apt update && apt install curl && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | -E bash -
+            apt update && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | bash -
       - add_ssh_keys:
           fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
       - attach_workspace:
@@ -250,7 +388,23 @@ jobs:
 workflows:
   default:
     jobs:
-      - configure-infrastructure
+      - build-frontend
+      - build-backend
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
+          requires: [build-backend]
+      - scan-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [master]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
