@@ -256,32 +256,13 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: |
-            sudo apt clean
-            sudo apt autoclean
-            sudo apt install -f
-            sudo apt autoremove
-            sudo apt install curl
-            sudo apt update
-            sudo apt install awscli -y
-            cd ~
-            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-            sudo echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-            sudo apt install yarn
-            node -v && npm -v    
-            sudo apt-get install python3 python3-pip -y
-            sudo pip3 install ansible
-            sudo apt update && curl -sL https://raw.githubusercontent.com/Unitech/pm2/master/packager/setup.deb.sh | sudo -E bash -
-            sudo npm install pm2 -g && pm2 update
-            pm2 stop default
-            pm2 start npm -- start
+            apk add --update ansible
       - add_ssh_keys:
           fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
       - attach_workspace:
@@ -299,7 +280,6 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
-
   smoke-test:
     docker:
       - image: amazon/aws-cli
