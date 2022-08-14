@@ -110,9 +110,9 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Install tar and gzip
-        command: |
-          yum -y install tar gzip
+          name: Install tar and gzip
+          command: |
+            yum -y install tar gzip
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -139,6 +139,10 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
+      - destroy-environment:
+          name: Destroy environments
+          when: on_fail
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 workflows:
   default:
