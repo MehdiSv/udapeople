@@ -37,7 +37,7 @@ commands:
 jobs:
   configure-infrastructure:
     docker:
-      - image: nikolaik/python-nodejs:latest
+      - image: nikolaik/python-nodejs:python3.10-nodejs18-alpine
     steps:
       - checkout
       - run:
@@ -115,7 +115,7 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: nikolaik/python-nodejs:latest
+      - image: nikolaik/python-nodejs:python3.10-nodejs18-alpine
     steps:
       - checkout
       - run:
