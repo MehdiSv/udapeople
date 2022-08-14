@@ -37,17 +37,23 @@ commands:
 jobs:
   configure-infrastructure:
     docker:
-      - image: cytopia/ansible:latest-aws
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
       - add_ssh_keys:
-          fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
+          fingerprints:
+            - "cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"
       - attach_workspace:
           at: ~/
       - run:
           name: Configure server
           command: |
             cd .circleci/ansible
+            cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
 
   run-migrations:
@@ -107,9 +113,13 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: cytopia/ansible:latest-aws
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
       - add_ssh_keys:
           fingerprints: ["cf:fa:39:ba:e4:1e:f4:2b:33:ee:ae:cb:30:10:d9:50"]
       - attach_workspace:
