@@ -1,8 +1,0 @@
-#!/bin/sh
-
-SUCCESS=$(curl --insecure  https://kvdb.io/9wfrkd4RKmdiHao1Hevdnu/migration_e8b743a)
-if [[ $SUCCESS == "Found" ]]
-then
-    echo "found"
-fi
-
