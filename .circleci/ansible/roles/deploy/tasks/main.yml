@@ -14,5 +14,6 @@
 
 - name: Start backend
   shell: |
+    cd /home/ubuntu/app
     npm install
     npm run start
