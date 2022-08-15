@@ -16,4 +16,4 @@
   shell: |
     cd /home/ubuntu/app
     npm install
-    npm run start
+    npm run start &
