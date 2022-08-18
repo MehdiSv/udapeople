@@ -17,4 +17,4 @@
     cd /home/ubuntu/app    
     pm2 start npm -- start
     sleep 20
-    echo "Done"
+    echo "Done."
